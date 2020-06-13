@@ -1,0 +1,14 @@
+name: DeathSwap
+main: net.cubiness.deathswap.Main
+version: 1.0
+api-version: 1.15
+commands:
+  ds:
+    description: Death swap commands
+    permission: deathswap.admin
+    usage: /ds <start|stop>
+permissions:
+  deathswap.admin:
+    description: Permission to run /ds
+    default: op
+depend: [ColaChampionship]
