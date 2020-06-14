@@ -20,7 +20,7 @@ public class DeathSwap extends Minigame {
 
   private final Main plugin;
   private final HashSet<DeathSwapPlayer> players = new HashSet<>();
-  private World world;
+  private final World world;
 
   public DeathSwap(Main plugin, MinigameAPI api) {
     super(api);
@@ -50,10 +50,30 @@ public class DeathSwap extends Minigame {
 
   @Override
   public void onStart() {
-    Bukkit.broadcastMessage(ChatColor.YELLOW + "DeathSwap is starting!");
+    if (players.size() < 2) {
+      Bukkit.broadcastMessage(ChatColor.RED + "DeathSwap needs at least 2 players in game!");
+      api.finish(this);
+      return;
+    }
     world.setTime(0);
     spreadPlayers();
     setTimer();
+  }
+
+  @Override
+  public void forceStop() {
+    sendPlayersSpawn();
+    players.clear();
+  }
+
+  @Override
+  public Location getLobby() {
+    return new Location(world, 0, 300, 0);
+  }
+
+  @Override
+  public String getName() {
+    return "DeathSwap";
   }
 
   private void endGame() {
@@ -112,22 +132,6 @@ public class DeathSwap extends Minigame {
       player.sendTeleportMessage(prev, next);
     }
     setTimer();
-  }
-
-  @Override
-  public void forceStop() {
-    sendPlayersSpawn();
-    players.clear();
-  }
-
-  @Override
-  public Location getLobby() {
-    return null;
-  }
-
-  @Override
-  public String getName() {
-    return "DeathSwap";
   }
 
   private static class DeathSwapPlayer {
