@@ -23,6 +23,7 @@ repositories {
 
 dependencies {
   compileOnly 'org.spigotmc:spigot-api:1.15.1-R0.1-SNAPSHOT'
+  compileOnly files('libs/ColaCore-1.0.jar')
 }
 
 jar {

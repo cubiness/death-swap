@@ -11,4 +11,4 @@ permissions:
   deathswap.admin:
     description: Permission to run /ds
     default: op
-depend: [ColaChampionship]
+depend: [ColaCore]
