@@ -61,7 +61,7 @@ public class DeathSwap extends Minigame {
   }
 
   @Override
-  public void forceStop() {
+  public void onForceStop() {
     sendPlayersSpawn();
     players.clear();
   }
