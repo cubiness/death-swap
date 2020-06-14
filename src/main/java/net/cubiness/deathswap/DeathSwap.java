@@ -29,6 +29,11 @@ public class DeathSwap extends Minigame {
   }
 
   @Override
+  protected void onReset() {
+    players.clear();
+  }
+
+  @Override
   protected void onPlayerJoin(Player player) {
     players.add(new DeathSwapPlayer(player));
   }
@@ -63,7 +68,7 @@ public class DeathSwap extends Minigame {
 
   @Override
   public Location getLobby() {
-    return new Location(world, 0, 300, 0);
+    return new Location(world, 0, 100, 0);
   }
 
   @Override
