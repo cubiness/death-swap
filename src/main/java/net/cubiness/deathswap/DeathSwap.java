@@ -50,11 +50,6 @@ public class DeathSwap extends Minigame {
 
   @Override
   public void onStart() {
-    if (players.size() < 2) {
-      Bukkit.broadcastMessage(ChatColor.RED + "DeathSwap needs at least 2 players in game!");
-      api.finish(this);
-      return;
-    }
     world.setTime(0);
     spreadPlayers();
     setTimer();
@@ -74,6 +69,11 @@ public class DeathSwap extends Minigame {
   @Override
   public String getName() {
     return "DeathSwap";
+  }
+
+  @Override
+  public int getMinimumPlayers() {
+    return 2;
   }
 
   private void endGame() {
