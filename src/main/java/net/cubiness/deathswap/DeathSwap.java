@@ -17,12 +17,14 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.scheduler.BukkitTask;
 
 public class DeathSwap extends Minigame {
 
   private final Main plugin;
   private final Map<UUID, DeathSwapPlayer> players = new HashMap<>();
   private final World world;
+  private BukkitTask swapPlayerId;
 
   public DeathSwap(Main plugin, MinigameAPI api) {
     super(api);
@@ -66,6 +68,7 @@ public class DeathSwap extends Minigame {
   public void onForceStop() {
     sendPlayersSpawn();
     players.clear();
+    swapPlayerId.cancel();
   }
 
   @Override
@@ -86,6 +89,7 @@ public class DeathSwap extends Minigame {
   private void endGame() {
     sendPlayersSpawn();
     players.clear();
+    swapPlayerId.cancel();
     api.finish(this);
   }
 
@@ -120,7 +124,7 @@ public class DeathSwap extends Minigame {
     players.values().forEach(DeathSwapPlayer::safeMessage);
     Bukkit.getScheduler()
         .runTaskLater(plugin, this::warnPlayers, 90 * 20);
-    Bukkit.getScheduler()
+    swapPlayerId = Bukkit.getScheduler()
         .runTaskLater(plugin, this::swapPlayers, (int) (Math.random() * (300 - 90) + 90) * 20);
   }
 
