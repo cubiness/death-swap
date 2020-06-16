@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import net.cubiness.colachampionship.minigame.Minigame;
 import net.cubiness.colachampionship.minigame.MinigameAPI;
+import net.cubiness.colachampionship.scoreboard.section.PointsSection;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
@@ -24,12 +25,15 @@ public class DeathSwap extends Minigame {
   private final Main plugin;
   private final Map<UUID, DeathSwapPlayer> players = new HashMap<>();
   private final World world;
+  private final PointsSection points;
   private BukkitTask swapPlayerId;
 
   public DeathSwap(Main plugin, MinigameAPI api) {
     super(api);
     this.plugin = plugin;
     world = Bukkit.getWorld("world");
+    points = new PointsSection(13, "Death Swap Points", 14);
+    api.addSection(points);
   }
 
   @Override
@@ -59,6 +63,10 @@ public class DeathSwap extends Minigame {
 
   @Override
   public void onStart() {
+    for (UUID id : players.keySet()) {
+      points.addPoints(id, 1);
+    }
+    api.updateScoreboard();
     world.setTime(0);
     spreadPlayers();
     setTimer();
