@@ -32,7 +32,9 @@ public class DeathSwap extends Minigame {
     super(api);
     this.plugin = plugin;
     world = Bukkit.getWorld("world");
-    points = new PointsSection(13, "Death Swap Points", 14);
+    points = new PointsSection(13,
+        "" + ChatColor.GREEN + ChatColor.BOLD + "Death Swap Points",
+        14);
     api.addSection(points);
   }
 
@@ -48,12 +50,18 @@ public class DeathSwap extends Minigame {
 
   @Override
   protected void onPlayerLeave(Player player) {
+    onPlayerDeath(player);
+  }
+
+  public void onPlayerDeath(Player player) {
     DeathSwapPlayer p = players.get(player.getUniqueId());
     if (p != null) {
       if (isRunning()) {
         Bukkit.broadcastMessage(p.getName() + ChatColor.YELLOW + " died!");
         p.spectator();
         players.remove(player.getUniqueId());
+        players.keySet().forEach(id -> points.addPoints(id, 1));
+        api.updateScoreboard();
         if (players.size() <= 1) {
           endGame();
         }
@@ -95,6 +103,9 @@ public class DeathSwap extends Minigame {
   }
 
   private void endGame() {
+    Bukkit.broadcastMessage(getPlayers().next().getName()
+        + ChatColor.YELLOW
+        + " has wone the game!");
     sendPlayersSpawn();
     players.clear();
     swapPlayerId.cancel();
@@ -102,7 +113,7 @@ public class DeathSwap extends Minigame {
   }
 
   private void sendPlayersSpawn() {
-    Bukkit.getOnlinePlayers().forEach(p -> {
+    getPlayers().forEachRemaining(p -> {
       p.teleport(new Location(Bukkit.getWorld("world"), 0.5, 201, 0.5));
       p.setFoodLevel(20);
       p.setHealth(20);
