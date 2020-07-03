@@ -6,24 +6,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import net.cubiness.colachampionship.minigame.Minigame;
-import net.cubiness.colachampionship.minigame.MinigameAPI;
-import net.cubiness.colachampionship.scoreboard.section.PointsSection;
+
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
+import net.cubiness.colachampionship.minigame.Minigame;
+import net.cubiness.colachampionship.minigame.MinigameAPI;
+import net.cubiness.colachampionship.scoreboard.section.PointsSection;
+
 public class DeathSwap extends Minigame {
 
   private final Main plugin;
-  private final Map<UUID, DeathSwapPlayer> players = new HashMap<>();
+  private final Map<UUID, DeathSwapPlayer> alivePlayers = new HashMap<>();
   private final World world;
   private final PointsSection points;
   private BukkitTask swapPlayerId;
@@ -40,12 +41,12 @@ public class DeathSwap extends Minigame {
 
   @Override
   protected void onReset() {
-    players.clear();
+    alivePlayers.clear();
   }
 
   @Override
   protected void onPlayerJoin(Player player) {
-    players.put(player.getUniqueId(), new DeathSwapPlayer(player));
+    alivePlayers.put(player.getUniqueId(), new DeathSwapPlayer(player));
   }
 
   @Override
@@ -54,15 +55,15 @@ public class DeathSwap extends Minigame {
   }
 
   public void onPlayerDeath(Player player) {
-    DeathSwapPlayer p = players.get(player.getUniqueId());
-    if (p != null) {
-      if (isRunning()) {
+    if (isRunning()) {
+      DeathSwapPlayer p = alivePlayers.get(player.getUniqueId());
+      if (p != null) {
         Bukkit.broadcastMessage(p.getName() + ChatColor.YELLOW + " died!");
         p.spectator();
-        players.remove(player.getUniqueId());
-        players.keySet().forEach(id -> points.addPoints(id, 1));
+        alivePlayers.remove(player.getUniqueId());
+        alivePlayers.keySet().forEach(id -> points.addPoints(id, 1));
         api.updateScoreboard();
-        if (players.size() <= 1) {
+        if (alivePlayers.size() <= 1) {
           endGame();
         }
       }
@@ -71,7 +72,7 @@ public class DeathSwap extends Minigame {
 
   @Override
   public void onStart() {
-    for (UUID id : players.keySet()) {
+    for (UUID id : alivePlayers.keySet()) {
       points.addPoints(id, 1);
     }
     api.updateScoreboard();
@@ -83,7 +84,7 @@ public class DeathSwap extends Minigame {
   @Override
   public void onForceStop() {
     sendPlayersSpawn();
-    players.clear();
+    alivePlayers.clear();
     swapPlayerId.cancel();
   }
 
@@ -103,18 +104,25 @@ public class DeathSwap extends Minigame {
   }
 
   private void endGame() {
-    Bukkit.broadcastMessage(getPlayers().next().getName()
-        + ChatColor.YELLOW
-        + " has wone the game!");
+    assert alivePlayers.size() == 1;
+    String winner = alivePlayers.entrySet().iterator().next().getValue().getName();
+    getPlayers().forEachRemaining(p -> {
+
+      p.sendTitle(ChatColor.GREEN + "Game Over!",
+          winner + ChatColor.YELLOW + " won the game!",
+          0 * 20,
+          5 * 20,
+          1 * 20);
+    });
     sendPlayersSpawn();
-    players.clear();
+    alivePlayers.clear();
     swapPlayerId.cancel();
     api.finish(this);
   }
 
   private void sendPlayersSpawn() {
     getPlayers().forEachRemaining(p -> {
-      p.teleport(new Location(Bukkit.getWorld("world"), 0.5, 201, 0.5));
+      p.teleport(api.getSpawn());
       p.setFoodLevel(20);
       p.setHealth(20);
       p.getInventory().clear();
@@ -122,25 +130,14 @@ public class DeathSwap extends Minigame {
   }
 
   private void spreadPlayers() {
-    for (DeathSwapPlayer p : players.values()) {
-      Location l = new Location(world, Math.random() * 200000, 0, Math.random() * 200000);
-      for (int i = 255; i > 0; i--) {
-        l.setY(i);
-        if (l.getBlock().getType() == Material.WATER) {
-          l.setX(Math.random() * 200000);
-          l.setY(Math.random() * 200000);
-          i = 255;
-        } else if (l.getBlock().getType() != Material.AIR) {
-          l.setY(i + 1);
-          break;
-        }
-      }
+    Location l = new Location(world, 0, 60, 0);
+    for (DeathSwapPlayer p : alivePlayers.values()) {
       p.setup(l);
     }
   }
 
   private void setTimer() {
-    players.values().forEach(DeathSwapPlayer::safeMessage);
+    alivePlayers.values().forEach(DeathSwapPlayer::safeMessage);
     Bukkit.getScheduler()
         .runTaskLater(plugin, this::warnPlayers, 90 * 20);
     swapPlayerId = Bukkit.getScheduler()
@@ -148,12 +145,12 @@ public class DeathSwap extends Minigame {
   }
 
   private void warnPlayers() {
-    players.values().forEach(DeathSwapPlayer::warn);
+    alivePlayers.values().forEach(DeathSwapPlayer::warn);
   }
 
   private void swapPlayers() {
-    players.values().forEach(DeathSwapPlayer::setOldLocation);
-    List<DeathSwapPlayer> players = new ArrayList<>(this.players.values());
+    alivePlayers.values().forEach(DeathSwapPlayer::setOldLocation);
+    List<DeathSwapPlayer> players = new ArrayList<>(this.alivePlayers.values());
     Collections.shuffle(players);
     for (int i = 0; i < players.size(); i++) {
       DeathSwapPlayer prev = i == 0 ? players.get(players.size() - 1) : players.get(i - 1);
@@ -208,10 +205,6 @@ public class DeathSwap extends Minigame {
 
     public void warn() {
       player.sendMessage(ChatColor.YELLOW + "You are no longer safe!");
-    }
-
-    public boolean isPlayer(Player p) {
-      return p.getUniqueId() == player.getUniqueId();
     }
 
     public void spectator() {
