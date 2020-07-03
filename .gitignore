@@ -3,3 +3,7 @@
 build
 
 .gradle
+
+.classpath
+.project
+.settings
