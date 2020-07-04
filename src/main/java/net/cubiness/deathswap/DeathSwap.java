@@ -11,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -32,11 +33,11 @@ public class DeathSwap extends Minigame {
   public DeathSwap(Main plugin, MinigameAPI api) {
     super(api);
     this.plugin = plugin;
-    world = Bukkit.getWorld("world");
+    world = Bukkit.getWorld("deathSwap");
     points = new PointsSection(13,
         "" + ChatColor.GREEN + ChatColor.BOLD + "Death Swap Points",
         14);
-    api.addSection(points);
+    api.addSection(this, points);
   }
 
   @Override
@@ -130,7 +131,24 @@ public class DeathSwap extends Minigame {
   }
 
   private void spreadPlayers() {
-    Location l = new Location(world, 0, 60, 0);
+    Location l = new Location(world, Math.random() * 200000, 0, Math.random() * 200000);
+    for (int i = 255; i > 0; i--) {
+      l.setY(i);
+      if (l.getBlock().getType() == Material.WATER) {
+        l.setX(Math.random() * 200000);
+        l.setY(Math.random() * 200000);
+        i = 255;
+      } else if (l.getBlock().getType() != Material.AIR) {
+        l.setY(i + 1);
+        break;
+      }
+    }
+    Bukkit.broadcastMessage(ChatColor.YELLOW + "Generating chunks...");
+    for (int x = (int) l.getChunk().getX() - 4; x < l.getChunk().getX() + 4; x++) {
+      for (int z = (int) l.getChunk().getZ() - 4; z < l.getChunk().getZ() + 4; z++) {
+        world.getChunkAt(x, z).load(true);
+      }
+    }
     for (DeathSwapPlayer p : alivePlayers.values()) {
       p.setup(l);
     }
