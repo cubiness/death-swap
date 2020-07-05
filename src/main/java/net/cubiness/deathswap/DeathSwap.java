@@ -20,6 +20,7 @@ import org.bukkit.scheduler.BukkitTask;
 
 import net.cubiness.colachampionship.minigame.Minigame;
 import net.cubiness.colachampionship.minigame.MinigameAPI;
+import net.cubiness.colachampionship.minigame.MinigamePlayer;
 import net.cubiness.colachampionship.scoreboard.section.PointsSection;
 
 public class DeathSwap extends Minigame {
@@ -33,11 +34,11 @@ public class DeathSwap extends Minigame {
   public DeathSwap(Main plugin, MinigameAPI api) {
     super(api);
     this.plugin = plugin;
-    world = Bukkit.getWorld("deathSwap");
+    world = Bukkit.getWorld("world");
     points = new PointsSection(13,
         "" + ChatColor.GREEN + ChatColor.BOLD + "Death Swap Points",
         14);
-    api.addSection(this, points);
+    scoreboard.add(points);
   }
 
   @Override
@@ -45,14 +46,15 @@ public class DeathSwap extends Minigame {
     alivePlayers.clear();
   }
 
+
   @Override
-  protected void onPlayerJoin(Player player) {
-    alivePlayers.put(player.getUniqueId(), new DeathSwapPlayer(player));
+  protected void onPlayerJoin(MinigamePlayer player) {
+    alivePlayers.put(player.getPlayer().getUniqueId(), new DeathSwapPlayer(player.getPlayer()));
   }
 
   @Override
-  protected void onPlayerLeave(Player player) {
-    onPlayerDeath(player);
+  protected void onPlayerLeave(MinigamePlayer player) {
+    onPlayerDeath(player.getPlayer());
   }
 
   public void onPlayerDeath(Player player) {
@@ -109,7 +111,7 @@ public class DeathSwap extends Minigame {
     String winner = alivePlayers.entrySet().iterator().next().getValue().getName();
     getPlayers().forEachRemaining(p -> {
 
-      p.sendTitle(ChatColor.GREEN + "Game Over!",
+      p.getPlayer().sendTitle(ChatColor.GREEN + "Game Over!",
           winner + ChatColor.YELLOW + " won the game!",
           0 * 20,
           5 * 20,
@@ -124,9 +126,9 @@ public class DeathSwap extends Minigame {
   private void sendPlayersSpawn() {
     getPlayers().forEachRemaining(p -> {
       p.teleport(api.getSpawn());
-      p.setFoodLevel(20);
-      p.setHealth(20);
-      p.getInventory().clear();
+      p.getPlayer().setFoodLevel(20);
+      p.getPlayer().setHealth(20);
+      p.getPlayer().getInventory().clear();
     });
   }
 
