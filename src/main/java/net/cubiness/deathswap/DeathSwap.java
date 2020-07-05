@@ -92,11 +92,6 @@ public class DeathSwap extends Minigame {
   }
 
   @Override
-  public Location getLobby() {
-    return new Location(world, 0, 100, 0);
-  }
-
-  @Override
   public String getName() {
     return "DeathSwap";
   }
