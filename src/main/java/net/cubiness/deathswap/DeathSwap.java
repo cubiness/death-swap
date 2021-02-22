@@ -19,7 +19,7 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
 import net.cubiness.colachampionship.minigame.Minigame;
-import net.cubiness.colachampionship.minigame.MinigameAPI;
+import net.cubiness.colachampionship.minigame.MinigameManager;
 import net.cubiness.colachampionship.minigame.MinigamePlayer;
 import net.cubiness.colachampionship.scoreboard.section.PointsSection;
 
@@ -31,10 +31,10 @@ public class DeathSwap extends Minigame {
   private final PointsSection points;
   private BukkitTask swapPlayerId;
 
-  public DeathSwap(Main plugin, MinigameAPI api) {
-    super(api);
+  public DeathSwap(Main plugin, MinigameManager manager) {
+    super(manager);
     this.plugin = plugin;
-    world = Bukkit.getWorld("world");
+    world = getLobby().getWorld();
     points = new PointsSection(13,
         "" + ChatColor.GREEN + ChatColor.BOLD + "Death Swap Points",
         14);
@@ -58,14 +58,14 @@ public class DeathSwap extends Minigame {
   }
 
   public void onPlayerDeath(Player player) {
-    if (isRunning()) {
-      DeathSwapPlayer p = alivePlayers.get(player.getUniqueId());
-      if (p != null) {
+    DeathSwapPlayer p = alivePlayers.get(player.getUniqueId());
+    if (p != null) {
+      alivePlayers.remove(player.getUniqueId());
+      if (isRunning()) {
         Bukkit.broadcastMessage(p.getName() + ChatColor.YELLOW + " died!");
         p.spectator();
-        alivePlayers.remove(player.getUniqueId());
         alivePlayers.keySet().forEach(id -> points.addPoints(id, 1));
-        api.updateScoreboard();
+        manager.updateScoreboard();
         if (alivePlayers.size() <= 1) {
           endGame();
         }
@@ -78,7 +78,7 @@ public class DeathSwap extends Minigame {
     for (UUID id : alivePlayers.keySet()) {
       points.addPoints(id, 1);
     }
-    api.updateScoreboard();
+    manager.updateScoreboard();
     world.setTime(0);
     spreadPlayers();
     setTimer();
@@ -115,12 +115,12 @@ public class DeathSwap extends Minigame {
     sendPlayersSpawn();
     alivePlayers.clear();
     swapPlayerId.cancel();
-    api.finish(this);
+    finish();
   }
 
   private void sendPlayersSpawn() {
     getPlayers().forEachRemaining(p -> {
-      p.teleport(api.getSpawn());
+      p.teleport(manager.getSpawn());
       p.getPlayer().setFoodLevel(20);
       p.getPlayer().setHealth(20);
       p.getPlayer().getInventory().clear();
